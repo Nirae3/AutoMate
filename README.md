@@ -1,0 +1,2 @@
+# AutoMate
+Automating everyday tasks
