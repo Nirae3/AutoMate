@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">Automation Products Catalog</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Neutrals & Sage Green -->
+    <!-- Application Structure Plan: 
+         1. Main Hero/ROI Estimator: Generic, eye-catching interaction focusing on potential financial savings (replaces old calculator).
+         2. Products Catalog: The main interactive hub where users select a product.
+         3. Dynamic Product View (#product-view): A single container dynamically loaded when a product is selected.
+            - Receipt Automation Product: Contains the highly personalized 'Lost Time Calculator' and use cases from the original report, focusing its value.
+            - Marketing Automation Product: Contains dummy content (summary of service).
+         4. Process Roadmap & FAQ: Retained as high-level service information.
+         5. Action Center: Final CTA.
+         This structure supports a funnel flow: Generic Hook (ROI) -> Product Selection (Catalog) -> Deep Value Proposition (Product View).
+    -->
+    <!-- Visualization & Content Choices:
+         1. Generic ROI Estimator:
+            - Goal: Inform & Motivate (Financial).
+            - Method: Simple Percentage Calculation (HTML/JS).
+            - Interaction: Sliders update financial output.
+            - Justification: Provides a generalized, high-impact hook before product selection.
+         2. Receipt Automation Calculator: (Retained and moved)
+            - Goal: Inform & Motivate (Time).
+            - Method: Stacked Bar Chart (Chart.js).
+            - Interaction: Sliders update data.
+            - Justification: Provides hyper-specific value tied directly to the product's function.
+         3. Process Flow & FAQ: (Retained)
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F9F9F7; /* Warm off-white */
+            color: #4A4A4A;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        /* Custom Range Slider */
+        input[type=range] {
+            -webkit-appearance: none; 
+            width: 100%; 
+            background: transparent; 
+        }
+        
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #5F8D78; /* Sage Green */
+            cursor: pointer;
+            margin-top: -8px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #E5E7EB;
+            border-radius: 2px;
+        }
+
+        .active-tab {
+            border-bottom: 3px solid #5F8D78;
+            color: #2F4F4F;
+            font-weight: 600;
+        }
+
+        .step-connector::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 100%;
+            width: 100%;
+            height: 2px;
+            background-color: #E5E7EB;
+            z-index: 0;
+            transform: translateY(-50%);
+        }
+        
+        .step-connector:last-child::after {
+            display: none;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="w-full bg-white border-b border-gray-100 py-6 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-6 flex justify-between items-center">
+            <div class="text-2xl font-bold text-gray-800 tracking-tight">Auto<span class="text-[#5F8D78]">mate</span>.</div>
+            <nav class="hidden md:flex space-x-8 text-sm font-medium text-gray-500">
+                <a href="#" onclick="showView('home'); return false;" class="hover:text-[#5F8D78] transition">Home</a>
+                <a href="#products" onclick="showView('products'); return false;" class="hover:text-[#5F8D78] transition">Products</a>
+                <a href="#process" class="hover:text-[#5F8D78] transition">Our Process</a>
+                <a href="#faq" class="hover:text-[#5F8D78] transition">Q&A</a>
+            </nav>
+            <button onclick="document.getElementById('contact').scrollIntoView({behavior: 'smooth'})" class="bg-[#2F4F4F] text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-[#5F8D78] transition shadow-md">
+                Contact Sales
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Container (Dynamic Views) -->
+    <main class="flex-grow">
+        <!-- View Container -->
+        <div id="view-home" class="view-section">
+            <!-- SECTION 1: Generic ROI Estimator (New Eye-Catching Hook) -->
+            <section id="roi-estimator" class="py-16 md:py-24 max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+                <div class="space-y-6">
+                    <div class="inline-block bg-[#E8F3EE] text-[#2F4F4F] px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide">
+                        Invest in Efficiency
+                    </div>
+                    <h1 class="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
+                        Calculate Your <span class="text-[#5F8D78]">Automation ROI</span>.
+                    </h1>
+                    <p class="text-lg text-gray-600 leading-relaxed">
+                        Automation isn't just about saving time; it's about reducing errors, accelerating processes, and generating more profit. See your potential financial upside.
+                    </p>
+                    
+                    <div class="bg-white p-6 rounded-xl card-shadow border border-gray-100">
+                        <h3 class="font-semibold text-gray-800 mb-4">Financial Savings Estimator</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="flex justify-between text-sm text-gray-600 mb-1">
+                                    <span>Current Annual Revenue ($)</span>
+                                    <span id="roi-val-revenue" class="font-bold text-[#5F8D78]">500,000</span>
+                                </label>
+                                <input type="range" id="roi-input-revenue" min="100000" max="5000000" value="500000" step="10000" class="w-full">
+                            </div>
+                            <div>
+                                <label class="flex justify-between text-sm text-gray-600 mb-1">
+                                    <span>Error-Prone Manual Tasks (Percentage)</span>
+                                    <span id="roi-val-errors" class="font-bold text-[#5F8D78]">10%</span>
+                                </label>
+                                <input type="range" id="roi-input-errors" min="1" max="50" value="10" step="1" class="w-full">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-100">
+                    <div class="mb-6 text-center">
+                        <h2 class="text-xl font-bold text-gray-800">Potential Annual Savings</h2>
+                        <p class="text-sm text-gray-500">Based on a 50% reduction in error costs/manual task time.</p>
+                    </div>
+                    <div class="text-center py-10 bg-[#E8F3EE] rounded-xl">
+                        <p class="text-6xl font-extrabold text-[#2F4F4F]">$<span id="estimated-savings">12,500</span></p>
+                        <p class="text-sm font-semibold text-[#5F8D78] mt-2">ESTIMATED FIRST-YEAR VALUE</p>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-4 text-center">Disclaimer: This is an estimation based on a model and does not guarantee results.</p>
+                </div>
+            </section>
+
+            <!-- SECTION 2: Products Catalog -->
+            <section id="products" class="py-16 bg-white border-t border-gray-100">
+                <div class="max-w-6xl mx-auto px-6 text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Our Products</h2>
+                    <p class="text-gray-600">
+                        A suite of custom automation solutions designed to target specific, time-consuming business processes.
+                    </p>
+                </div>
+
+                <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-8">
+                    <!-- Product 1: Receipt Automation (LIVE) -->
+                    <div onclick="loadProduct('receipt')" class="bg-[#F3F4F6] p-6 rounded-xl border-2 border-transparent hover:border-[#5F8D78] transition cursor-pointer card-shadow">
+                        <div class="text-4xl mb-3">🧾</div>
+                        <h3 class="font-bold text-xl text-gray-900 mb-2">Receipt Automation</h3>
+                        <p class="text-sm text-gray-600 mb-4">
+                            Photo-to-Spreadsheet: Capture receipt data instantly, extract key details, and file the image link directly into Google Drive/Excel.
+                        </p>
+                        <div class="inline-block bg-[#5F8D78] text-white px-3 py-1 text-xs font-bold rounded-full">
+                            Available Now
+                        </div>
+                    </div>
+
+                    <!-- Product 2: Marketing Automation (DUMMY) -->
+                    <div onclick="loadProduct('marketing')" class="bg-[#F3F4F6] p-6 rounded-xl border-2 border-transparent hover:border-[#5F8D78] transition cursor-pointer card-shadow">
+                        <div class="text-4xl mb-3">📣</div>
+                        <h3 class="font-bold text-xl text-gray-900 mb-2">Social Marketing Engine</h3>
+                        <p class="text-sm text-gray-600 mb-4">
+                            Generates poster images, resizes for all social platforms (Instagram, LinkedIn, X), and queues the post for sending. Fully hands-free.
+                        </p>
+                        <div class="inline-block bg-gray-400 text-white px-3 py-1 text-xs font-bold rounded-full">
+                            Dummy Product
+                        </div>
+                    </div>
+
+                    <!-- Product 3: Digital Filing (DUMMY) -->
+                    <div onclick="loadProduct('filing')" class="bg-[#F3F4F6] p-6 rounded-xl border-2 border-transparent hover:border-[#5F8D78] transition cursor-pointer card-shadow">
+                        <div class="text-4xl mb-3">🗂️</div>
+                        <h3 class="font-bold text-xl text-gray-900 mb-2">Advanced Digital Filing</h3>
+                        <p class="text-sm text-gray-600 mb-4">
+                            Automatically scans email attachments and downloaded files, classifying and moving them into correct cloud storage folders.
+                        </p>
+                        <div class="inline-block bg-gray-400 text-white px-3 py-1 text-xs font-bold rounded-full">
+                            Dummy Product
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+        
+        <!-- PRODUCT DETAILS VIEW (Hidden by default) -->
+        <div id="view-product" class="view-section hidden pt-12">
+            <div class="max-w-6xl mx-auto px-6">
+                <button onclick="showView('home')" class="text-sm text-gray-500 hover:text-[#5F8D78] mb-8 flex items-center">
+                    <span class="mr-1">←</span> Back to Products
+                </button>
+            </div>
+            
+            <div id="product-content">
+                <!-- Content will be injected here by JS based on product selection -->
+            </div>
+        </div>
+
+
+        <!-- GLOBAL SECTIONS (Process and FAQ remain global) -->
+
+        <!-- SECTION 4: Process (Stepper) -->
+        <section id="process" class="py-16 bg-[#2F4F4F] text-white">
+            <div class="max-w-6xl mx-auto px-6">
+                <div class="mb-12">
+                    <h2 class="text-3xl font-bold mb-4">Our 5-Step Implementation Process</h2>
+                    <p class="text-gray-300 max-w-2xl">Simple steps. Zero complexity. You don't need to know code. We build the engine; you just enjoy the ride.</p>
+                </div>
+
+                <div class="relative">
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <!-- Step 1 -->
+                        <div class="step-card relative p-4 rounded-lg bg-white/10 hover:bg-white/20 transition cursor-pointer" onclick="showStep(1)">
+                            <div class="text-xs font-bold text-[#5F8D78] uppercase mb-1">Step 01</div>
+                            <h3 class="font-bold text-lg mb-1">Short Call</h3>
+                        </div>
+                        <!-- Step 2 -->
+                        <div class="step-card relative p-4 rounded-lg bg-white/10 hover:bg-white/20 transition cursor-pointer" onclick="showStep(2)">
+                            <div class="text-xs font-bold text-[#5F8D78] uppercase mb-1">Step 02</div>
+                            <h3 class="font-bold text-lg mb-1">Blueprint</h3>
+                        </div>
+                        <!-- Step 3 -->
+                        <div class="step-card relative p-4 rounded-lg bg-white/10 hover:bg-white/20 transition cursor-pointer" onclick="showStep(3)">
+                            <div class="text-xs font-bold text-[#5F8D78] uppercase mb-1">Step 03</div>
+                            <h3 class="font-bold text-lg mb-1">The Build</h3>
+                        </div>
+                        <!-- Step 4 -->
+                        <div class="step-card relative p-4 rounded-lg bg-white/10 hover:bg-white/20 transition cursor-pointer" onclick="showStep(4)">
+                            <div class="text-xs font-bold text-[#5F8D78] uppercase mb-1">Step 04</div>
+                            <h3 class="font-bold text-lg mb-1">Test Run</h3>
+                        </div>
+                        <!-- Step 5 -->
+                        <div class="step-card relative p-4 rounded-lg bg-white/10 hover:bg-white/20 transition cursor-pointer" onclick="showStep(5)">
+                            <div class="text-xs font-bold text-[#5F8D78] uppercase mb-1">Step 05</div>
+                            <h3 class="font-bold text-lg mb-1">Handover</h3>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Detail Box -->
+                    <div id="step-detail" class="mt-8 bg-white text-gray-800 p-6 rounded-xl shadow-lg border-l-4 border-[#5F8D78] transition-all duration-300">
+                        <h4 class="text-xl font-bold mb-2" id="step-title">The Short Call</h4>
+                        <p class="text-gray-600" id="step-desc">We start with a quick conversation. You simply tell us what frustrates you, where you feel stuck, or what you hate doing every day. We listen closely to understand the problem.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: Q&A (Accordion) -->
+        <section id="faq" class="py-16 max-w-3xl mx-auto px-6">
+            <h2 class="text-3xl font-bold text-gray-900 text-center mb-10">Common Questions</h2>
+            <div class="space-y-4">
+                <details class="group bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <summary class="flex justify-between items-center p-5 cursor-pointer font-medium text-gray-800">
+                        Is this expensive?
+                        <span class="transform group-open:rotate-180 transition-transform">▼</span>
+                    </summary>
+                    <div class="px-5 pb-5 text-gray-600 text-sm leading-relaxed">
+                        Automation is an investment, not an expense. Our clients quickly find that the time saved allows them to focus on revenue-generating activities, easily covering the cost of the service. The real cost is the time you are losing right now.
+                    </div>
+                </details>
+                <details class="group bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <summary class="flex justify-between items-center p-5 cursor-pointer font-medium text-gray-800">
+                        Do I need to understand AI or technology?
+                        <span class="transform group-open:rotate-180 transition-transform">▼</span>
+                    </summary>
+                    <div class="px-5 pb-5 text-gray-600 text-sm leading-relaxed">
+                        Absolutely not. We are the technical experts so you don't have to be. Your only job is to tell us what you want to stop doing. We build the engine; you just enjoy the ride.
+                    </div>
+                </details>
+                <details class="group bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <summary class="flex justify-between items-center p-5 cursor-pointer font-medium text-gray-800">
+                        What if my current process is messy?
+                        <span class="transform group-open:rotate-180 transition-transform">▼</span>
+                    </summary>
+                    <div class="px-5 pb-5 text-gray-600 text-sm leading-relaxed">
+                        Most people's processes are messy! That's why we exist. We start by mapping out your current steps and then design a clean, automated workflow that corrects the mess. It's a fresh start.
+                    </div>
+                </details>
+                <details class="group bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <summary class="flex justify-between items-center p-5 cursor-pointer font-medium text-gray-800">
+                        Is this secure?
+                        <span class="transform group-open:rotate-180 transition-transform">▼</span>
+                    </summary>
+                    <div class="px-5 pb-5 text-gray-600 text-sm leading-relaxed">
+                        Security and privacy are our highest priority. We use best-practice systems and only work with secure, established platforms to ensure your data and workflows are protected. Your custom system is built for your use only.
+                    </div>
+                </details>
+            </div>
+        </section>
+
+        <!-- SECTION 6: CTA -->
+        <section id="contact" class="py-20 bg-[#F3F4F6] text-center px-6">
+            <div class="max-w-2xl mx-auto">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Start Automating Today</h2>
+                <p class="text-lg text-gray-600 mb-8">
+                    Stop manually managing your business processes and start focusing on growth. Our products deliver immediate, measurable ROI.
+                </p>
+                <div class="bg-white p-8 rounded-2xl shadow-lg max-w-lg mx-auto">
+                    <h3 class="text-xl font-bold text-[#2F4F4F] mb-4">Book a 15-Minute Intro Call</h3>
+                    <p class="text-sm text-gray-500 mb-6">Let’s talk about the exact process you can automate this week.</p>
+                    <form class="space-y-4" onsubmit="event.preventDefault(); alert('In a real app, this would book your call!');">
+                        <input type="email" placeholder="Your Email Address" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#5F8D78]">
+                        <button type="submit" class="w-full bg-[#2F4F4F] text-white font-bold py-3 rounded-lg hover:bg-[#5F8D78] transition shadow-lg transform hover:-translate-y-1">
+                            Get Started
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-white py-8 border-t border-gray-200 text-center text-gray-400 text-sm">
+        <p>&copy; 2024 Automation Services. Work smarter, not harder.</p>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- DATA STRUCTURE FOR PRODUCT CONTENT ---
+        const PRODUCTS = {
+            receipt: {
+                title: "Receipt Automation: Photo-to-Finance",
+                sections: [
+                    { 
+                        type: 'calculator', 
+                        heading: "Calculate Your Lost Time",
+                        subheading: "Find out how many hours you lose manually filing receipts and expenses, and what you could reclaim.",
+                        content: `
+                            <div class="space-y-6">
+                                <div class="bg-white p-6 rounded-xl card-shadow border border-gray-100">
+                                    <h3 class="font-semibold text-gray-800 mb-4">Estimate Time Savings (Receipts & Admin)</h3>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="flex justify-between text-sm text-gray-600 mb-1">
+                                                <span>Paperwork & Receipts (Hours/Week)</span>
+                                                <span id="val-receipts" class="font-bold text-[#5F8D78]">2</span>
+                                            </label>
+                                            <input type="range" id="input-receipts" min="0" max="10" value="2" step="0.5" class="w-full">
+                                        </div>
+                                        <div>
+                                            <label class="flex justify-between text-sm text-gray-600 mb-1">
+                                                <span>Data Entry & Admin (Hours/Week)</span>
+                                                <span id="val-admin" class="font-bold text-[#5F8D78]">4</span>
+                                            </label>
+                                            <input type="range" id="input-admin" min="0" max="20" value="4" step="0.5" class="w-full">
+                                        </div>
+                                        <div>
+                                            <label class="flex justify-between text-sm text-gray-600 mb-1">
+                                                <span>Email Follow-ups (Hours/Week)</span>
+                                                <span id="val-email" class="font-bold text-[#5F8D78]">3</span>
+                                            </label>
+                                            <input type="range" id="input-email" min="0" max="15" value="3" step="0.5" class="w-full">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-100">
+                                    <div class="mb-6 text-center">
+                                        <h2 class="text-xl font-bold text-gray-800">Your Annual Time Opportunity</h2>
+                                        <p class="text-sm text-gray-500">Current vs. Automated Potential for filing tasks</p>
+                                    </div>
+                                    <div class="chart-container">
+                                        <canvas id="timeChart"></canvas>
+                                    </div>
+                                    <div class="mt-6 text-center bg-[#F9F9F7] p-4 rounded-lg">
+                                        <p class="text-gray-600 text-sm">You could reclaim approximately <span id="saved-hours" class="font-bold text-[#2F4F4F] text-lg">400</span> hours this year.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `
+                    },
+                    {
+                        type: 'usecases',
+                        heading: "Seamless Expense Management",
+                        content: `
+                            <div class="max-w-5xl mx-auto">
+                                <div class="flex justify-center border-b border-gray-200 mb-8 overflow-x-auto">
+                                    <button onclick="switchTab('receipts')" id="tab-receipts" class="active-tab px-6 py-3 text-sm md:text-base font-medium text-gray-500 hover:text-gray-700 transition focus:outline-none whitespace-nowrap">The Disappearing Receipt</button>
+                                    <button onclick="switchTab('followup')" id="tab-followup" class="px-6 py-3 text-sm md:text-base font-medium text-gray-500 hover:text-gray-700 transition focus:outline-none whitespace-nowrap">Automatic Follow-Up</button>
+                                </div>
+
+                                <div id="content-receipts" class="grid md:grid-cols-2 gap-8 items-center animate-fade-in">
+                                    <div class="bg-[#F3F4F6] p-8 rounded-2xl h-full flex flex-col justify-center">
+                                        <div class="text-4xl mb-4">🧾 ➡️ 📂</div>
+                                        <h3 class="text-2xl font-bold text-gray-800 mb-2">Expense Nightmare Solved</h3>
+                                        <p class="text-gray-600 italic">"You have a stack of paper receipts. Before tax season, it's a stressful scramble. Our solution eliminates this."</p>
+                                    </div>
+                                    <div class="space-y-4">
+                                        <h4 class="text-xl font-bold text-[#5F8D78]">The Automation Flow</h4>
+                                        <p class="text-gray-700">When you take a photo or forward an invoice, the system instantly processes it:</p>
+                                        <ul class="space-y-2 text-sm text-gray-600">
+                                            <li class="flex items-start"><span class="mr-2 text-green-500">✓</span> Extracts date, vendor, cost, tax.</li>
+                                            <li class="flex items-start"><span class="mr-2 text-green-500">✓</span> Saves receipt image to Google Drive folder.</li>
+                                            <li class="flex items-start"><span class="mr-2 text-green-500">✓</span> Enters extracted data into your Google Sheet/Excel file.</li>
+                                        </ul>
+                                        <div class="bg-[#E8F3EE] p-4 rounded-lg mt-4 border-l-4 border-[#5F8D78]">
+                                            <span class="font-bold text-[#2F4F4F]">Result:</span> Zero manual entry. Audit-ready records.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="content-followup" class="hidden grid md:grid-cols-2 gap-8 items-center animate-fade-in">
+                                    <div class="bg-[#F3F4F6] p-8 rounded-2xl h-full flex flex-col justify-center">
+                                        <div class="text-4xl mb-4">📧 ➡️ 🤝</div>
+                                        <h3 class="text-2xl font-bold text-gray-800 mb-2">Related: Automatic Follow-Up</h3>
+                                        <p class="text-gray-600 italic">"The core benefit is reclaiming time, which you can use for sales follow-up."</p>
+                                    </div>
+                                    <div class="space-y-4">
+                                        <h4 class="text-xl font-bold text-[#5F8D78]">The Automation Solution</h4>
+                                        <p class="text-gray-700">One of the processes your free time can enable:</p>
+                                        <ul class="space-y-2 text-sm text-gray-600">
+                                            <li class="flex items-start"><span class="mr-2 text-green-500">✓</span> Instantly sends intro email.</li>
+                                            <li class="flex items-start"><span class="mr-2 text-green-500">✓</span> Sends helpful follow-up 3 days later.</li>
+                                        </ul>
+                                        <div class="bg-[#E8F3EE] p-4 rounded-lg mt-4 border-l-4 border-[#5F8D78]">
+                                            <span class="font-bold text-[#2F4F4F]">Result:</span> Better client experience. More booked meetings.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `
+                    }
+                ]
+            },
+            marketing: {
+                title: "Social Marketing Engine (Dummy Product)",
+                sections: [
+                    { 
+                        type: 'summary', 
+                        heading: "End-to-End Social Content Automation",
+                        subheading: "Imagine a process that handles everything from concept to post.",
+                        content: `
+                            <div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-lg border border-gray-100">
+                                <p class="text-lg text-gray-700 mb-4">
+                                    <span class="font-bold text-red-500">NOTE: This product is currently in development (Dummy Product).</span> It showcases the complexity of automation we are capable of delivering.
+                                </p>
+                                <h4 class="text-xl font-bold text-[#2F4F4F] mb-3">The Full Marketing Funnel Automation:</h4>
+                                <ul class="list-disc list-inside space-y-2 text-gray-600 ml-4">
+                                    <li><strong>Image Generation:</strong> Input a topic, the system automatically creates a poster image (e.g., a relevant quote or statistic).</li>
+                                    <li><strong>Resize & Format:</strong> The single generated image is optimized and resized for all target platforms (1:1 for Instagram, 16:9 for LinkedIn, etc.).</li>
+                                    <li><strong>Copywriting:</strong> Generates platform-specific captions and hashtags.</li>
+                                    <li><strong>Scheduling & Posting:</strong> Distributes the final assets to LinkedIn, Instagram, and X (Twitter) at optimal times, ensuring consistent brand presence.</li>
+                                </ul>
+                                <div class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                    <p class="text-sm text-yellow-800">Goal: Reduce the marketing manager's time commitment from 8 hours a week to under 30 minutes.</p>
+                                </div>
+                            </div>
+                        `
+                    }
+                ]
+            },
+            filing: {
+                title: "Advanced Digital Filing (Dummy Product)",
+                sections: [
+                    { 
+                        type: 'summary', 
+                        heading: "Contextual Document Organization",
+                        subheading: "Never manually drag a file again. The system knows where your documents belong.",
+                        content: `
+                            <div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-lg border border-gray-100">
+                                <p class="text-lg text-gray-700 mb-4">
+                                    <span class="font-bold text-red-500">NOTE: This product is currently in development (Dummy Product).</span>
+                                </p>
+                                <p class="text-gray-600">
+                                    This product monitors your email attachments and local download folders. Based on the file's content (e.g., reading the sender's name, keywords in the subject line, or text within the document), it automatically routes the file to the correct, project-specific folder in your Google Drive or Dropbox. You set the rules once; the system maintains perfect organization forever.
+                                </p>
+                            </div>
+                        `
+                    }
+                ]
+            }
+        };
+
+        let myChart = null; // Global Chart instance for Receipt Product
+        
+        // --- VIEW SWITCHING LOGIC ---
+        function showView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById('view-' + viewId).classList.remove('hidden');
+            
+            // Set the scroll to the top of the new view
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            if (viewId === 'home') {
+                document.getElementById('pageTitle').innerText = "Automation Products Catalog";
+            }
+        }
+
+        // --- ROI ESTIMATOR LOGIC (Home View Hook) ---
+        function updateROI_Estimator() {
+            const revenueInput = document.getElementById('roi-input-revenue');
+            const errorsInput = document.getElementById('roi-input-errors');
+            const revenueDisplay = document.getElementById('roi-val-revenue');
+            const errorsDisplay = document.getElementById('roi-val-errors');
+            const savingsDisplay = document.getElementById('estimated-savings');
+
+            if (!revenueInput || !errorsInput) return;
+
+            const annualRevenue = parseFloat(revenueInput.value);
+            const errorPercentage = parseFloat(errorsInput.value) / 100;
+
+            revenueDisplay.innerText = annualRevenue.toLocaleString();
+            errorsDisplay.innerText = `${errorPercentage * 100}%`;
+
+            // Assumption: 5% of error-prone tasks' value is recovered in the first year.
+            const estimatedSavings = Math.round(annualRevenue * errorPercentage * 0.5);
+
+            animateValue(savingsDisplay, parseInt(savingsDisplay.innerText.replace(/,/g, '') || 0), estimatedSavings, 500);
+        }
+
+        // --- PRODUCT DETAILS LOGIC ---
+        function loadProduct(productId) {
+            const product = PRODUCTS[productId];
+            if (!product) return;
+
+            document.getElementById('pageTitle').innerText = product.title;
+            const contentContainer = document.getElementById('product-content');
+            
+            let htmlContent = `<header class="bg-white py-10 border-b border-gray-100 mb-12">
+                                <div class="max-w-6xl mx-auto px-6">
+                                    <h2 class="text-4xl font-bold text-gray-900">${product.title}</h2>
+                                    <p class="text-lg text-gray-600 mt-2">${productId === 'receipt' ? 'The ultimate solution for hands-free financial filing.' : 'A preview of future automation products.'}</p>
+                                </div>
+                            </header>
+                            <div class="max-w-6xl mx-auto px-6 space-y-16 pb-16">`;
+
+            product.sections.forEach(section => {
+                htmlContent += `<section class="pt-8">
+                                    <div class="text-center mb-10">
+                                        <h3 class="text-3xl font-bold text-gray-800">${section.heading}</h3>
+                                        <p class="text-gray-500 mt-2">${section.subheading}</p>
+                                    </div>
+                                    ${section.content}
+                                </section>`;
+            });
+
+            htmlContent += `</div>`;
+            contentContainer.innerHTML = htmlContent;
+
+            // Handle initialization specific to the Receipt Product
+            if (productId === 'receipt') {
+                setTimeout(() => { // Ensure DOM elements are rendered before initializing Chart/Listeners
+                    initChart(); 
+                    
+                    document.getElementById('input-receipts').addEventListener('input', updateCalculator);
+                    document.getElementById('input-admin').addEventListener('input', updateCalculator);
+                    document.getElementById('input-email').addEventListener('input', updateCalculator);
+                    updateCalculator(); // Initial calculation
+                    
+                    // Reset tab state
+                    switchTab('receipts');
+                }, 50);
+            }
+            
+            showView('product');
+        }
+
+        // --- RECEIPT CALCULATOR LOGIC (Product Specific) ---
+        function initChart() {
+            const ctx = document.getElementById('timeChart');
+            if (!ctx) return; // Guard for non-receipt products
+
+            // Destroy previous chart instance if it exists
+            if (myChart) {
+                myChart.destroy();
+            }
+            
+            // Chart.js Configuration
+            myChart = new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Receipts', 'Admin', 'Email'],
+                    datasets: [
+                        {
+                            label: 'Manual (Hours/Year)',
+                            data: [100, 200, 150],
+                            backgroundColor: '#E5E7EB',
+                            borderRadius: 4,
+                            stack: 'Stack 0',
+                        },
+                        {
+                            label: 'Automated (Hours/Year)',
+                            data: [10, 20, 15],
+                            backgroundColor: '#5F8D78',
+                            borderRadius: 4,
+                            stack: 'Stack 1',
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Hours per Year'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.raw + ' hrs';
+                                }
+                            }
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCalculator() {
+            const inputs = {
+                receipts: document.getElementById('input-receipts'),
+                admin: document.getElementById('input-admin'),
+                email: document.getElementById('input-email')
+            };
+            const displays = {
+                receipts: document.getElementById('val-receipts'),
+                admin: document.getElementById('val-admin'),
+                email: document.getElementById('val-email')
+            };
+            const totalSavedDisplay = document.getElementById('saved-hours');
+
+            // Check if all elements exist (for non-receipt products)
+            if (!inputs.receipts) return;
+
+            const rVal = parseFloat(inputs.receipts.value);
+            const aVal = parseFloat(inputs.admin.value);
+            const eVal = parseFloat(inputs.email.value);
+
+            displays.receipts.innerText = rVal;
+            displays.admin.innerText = aVal;
+            displays.email.innerText = eVal;
+
+            const rAnnual = rVal * 50;
+            const aAnnual = aVal * 50;
+            const eAnnual = eVal * 50;
+
+            const rAuto = rAnnual * 0.1;
+            const aAuto = aAnnual * 0.1;
+            const eAuto = eAnnual * 0.1;
+
+            if (myChart) {
+                myChart.data.datasets[0].data = [rAnnual, aAnnual, eAnnual];
+                myChart.data.datasets[1].data = [rAuto, aAuto, eAuto];
+                myChart.update();
+            }
+
+            const totalManual = rAnnual + aAnnual + eAnnual;
+            const totalAuto = rAuto + aAuto + eAuto;
+            const saved = Math.round(totalManual - totalAuto);
+            
+            animateValue(totalSavedDisplay, parseInt(totalSavedDisplay.innerText || 0), saved, 500);
+        }
+
+        // --- ANIMATION / HELPER FUNCTIONS ---
+        function animateValue(obj, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end - start) + start).toLocaleString();
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        // --- PRODUCT TAB LOGIC (Shared) ---
+        function switchTab(tabId) {
+            ['receipts', 'followup'].forEach(id => {
+                const tabBtn = document.getElementById('tab-' + id);
+                const tabContent = document.getElementById('content-' + id);
+                
+                if (tabBtn) tabBtn.classList.remove('active-tab');
+                if (tabContent) tabContent.classList.add('hidden');
+            });
+
+            const activeBtn = document.getElementById('tab-' + tabId);
+            const content = document.getElementById('content-' + tabId);
+
+            if (activeBtn) activeBtn.classList.add('active-tab');
+            if (content) content.classList.remove('hidden');
+        }
+
+        // --- PROCESS STEPPER LOGIC (Global) ---
+        const steps = {
+            1: { title: "The Short Call", desc: "We start with a quick conversation. You simply tell us what frustrates you, where you feel stuck, or what you hate doing every day. We listen closely to understand the problem." },
+            2: { title: "The Blueprint", desc: "We identify the perfect, non-technical solution. We show you exactly what will be automated, what the final result looks like, and how much time it will save you." },
+            3: { title: "The Build", desc: "We handle all the complex setup and technical work behind the scenes. You don't see any of it. We construct the custom workflow tailored to your needs." },
+            4: { title: "The Test Run", desc: "We test the automation extensively to ensure it is flawless. Then, we walk you through a simple demonstration to prove it works perfectly." },
+            5: { title: "The Handover", desc: "We turn it on and hand you the simple 'Start' button. We provide easy, written instructions on how to use the new, faster process. You never need to touch code." }
+        };
+
+        function showStep(stepNum) {
+            const titleEl = document.getElementById('step-title');
+            const descEl = document.getElementById('step-desc');
+            
+            titleEl.style.opacity = 0;
+            descEl.style.opacity = 0;
+
+            setTimeout(() => {
+                titleEl.innerText = steps[stepNum].title;
+                descEl.innerText = steps[stepNum].desc;
+                titleEl.style.opacity = 1;
+                descEl.style.opacity = 1;
+            }, 200);
+        }
+
+        // --- INITIALIZATION ---
+        window.onload = function() {
+            // Setup ROI Estimator listeners
+            document.getElementById('roi-input-revenue').addEventListener('input', updateROI_Estimator);
+            document.getElementById('roi-input-errors').addEventListener('input', updateROI_Estimator);
+            updateROI_Estimator();
+            
+            // Set initial stepper details
+            showStep(1);
+        };
+
+    </script>
+</body>
+</html>
