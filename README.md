@@ -1,5 +1,5 @@
 # AutoMate
-##Business
+## Business
 
 Our website represents a business that creates custom automation systems for everyday and business tasks. The goal is to help people save time, reduce stress, and avoid repetitive work by building systems that run in the background without requiring technical knowledge.
 
